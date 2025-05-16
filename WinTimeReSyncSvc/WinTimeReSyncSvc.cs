@@ -18,19 +18,22 @@ namespace WinTimeReSyncSvc
     {
         private const string eventSourceName = "WinTimeReSyncSvc";
         private const string logName = "";
+
+        private const double ONE_SEC = 1000;
+
         public WinTimeReSyncSvc()
         {
             InitializeComponent();
             try
             {
-                _eventLog1 = new EventLog();
+                _eventLog = new EventLog();
                 if (!EventLog.SourceExists(eventSourceName))
                 {
                     EventLog.CreateEventSource(eventSourceName, logName);
                 }
 
-                _eventLog1.Source = eventSourceName;
-                _eventLog1.Log = logName;
+                _eventLog.Source = eventSourceName;
+                _eventLog.Log = logName;
             }
             catch (Exception ex)
             {
@@ -40,11 +43,11 @@ namespace WinTimeReSyncSvc
 
         protected override void OnStart(string[] args)
         {
-            _eventLog1.WriteEntry("Initializing WinTimeReSyncSvc service");
+            _eventLog.WriteEntry("Initializing service.");
 
             Timer timer = new System.Timers.Timer
             {
-                Interval = 60000 // 60 seconds
+                Interval = 10 * 60 * ONE_SEC // 60 seconds
             };
             timer.Elapsed += new ElapsedEventHandler(this.OnTimer);
             timer.Start();
@@ -53,24 +56,23 @@ namespace WinTimeReSyncSvc
         public void OnTimer(object sender, ElapsedEventArgs args)
         {
             // TODO: Insert monitoring activities here.
-            _eventLog1.WriteEntry("Pooling ntp server", EventLogEntryType.Information);
+            _eventLog.WriteEntry("Pooling ntp server", EventLogEntryType.Information);
             var dt = DateTimeUtil.GetNetworkTime();
-            _eventLog1.WriteEntry($"Got time from ntp server: {dt}", EventLogEntryType.Information);
+            _eventLog.WriteEntry($"Got time from ntp server: {dt}", EventLogEntryType.Information);
             if (!DateTimeUtil.SetSystemLocalTime(dt))
             {
                 var ex = new Win32Exception(Marshal.GetLastWin32Error());
-                _eventLog1.WriteEntry($"Error setting system date time: {ex}", EventLogEntryType.Error);
+                _eventLog.WriteEntry($"Error setting system date time: {ex}", EventLogEntryType.Error);
             }
             else
             {
-                _eventLog1.WriteEntry($"Set system date time to: {dt} successfully", EventLogEntryType.Information);
+                _eventLog.WriteEntry($"Set system date time to: {dt} successfully", EventLogEntryType.Information);
             }
         }
 
         protected override void OnStop()
         {
-            base.OnStop();
-            _eventLog1.WriteEntry("In OnStop");
+            _eventLog.WriteEntry("Service stopped.");
         }
 
         protected override void OnShutdown()

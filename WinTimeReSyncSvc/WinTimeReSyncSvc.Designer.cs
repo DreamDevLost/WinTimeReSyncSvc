@@ -28,24 +28,24 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this._eventLog1 = new System.Diagnostics.EventLog();
-            ((System.ComponentModel.ISupportInitialize)(this._eventLog1)).BeginInit();
+            this._eventLog = new System.Diagnostics.EventLog();
+            ((System.ComponentModel.ISupportInitialize)(this._eventLog)).BeginInit();
             // 
-            // _eventLog1
+            // _eventLog
             // 
-            this._eventLog1.Log = "Application";
-            this._eventLog1.Source = "WinTimeReSyncSvc";
-            this._eventLog1.EntryWritten += new System.Diagnostics.EntryWrittenEventHandler(this.eventLog1_EntryWritten);
+            this._eventLog.Log = "Application";
+            this._eventLog.Source = "WinTimeReSyncSvc";
+            this._eventLog.EntryWritten += new System.Diagnostics.EntryWrittenEventHandler(this.eventLog1_EntryWritten);
             // 
             // WinTimeReSyncSvc
             // 
             this.ServiceName = "WinTimeReSyncSvc";
-            ((System.ComponentModel.ISupportInitialize)(this._eventLog1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this._eventLog)).EndInit();
 
         }
 
         #endregion
 
-        private System.Diagnostics.EventLog _eventLog1;
+        private System.Diagnostics.EventLog _eventLog;
     }
 }

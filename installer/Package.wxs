@@ -1,4 +1,5 @@
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
   <Package
     Name="WinTimeReSyncSvc"
     Manufacturer="DreamDevLost"
@@ -22,11 +23,19 @@
             Id="InstallWinTimeReSyncSvc"
             Name="WinTimeReSyncSvc"
             DisplayName="WinTimeReSyncSvc"
-            Description="Re-synchronizes the Windows system time."
+            Description="Keeps the Windows system clock synchronized using independent NTP servers."
             Type="ownProcess"
             Start="auto"
             ErrorControl="normal"
-            Account="LocalSystem" />
+            Account="LocalSystem"
+            Vital="yes">
+            <util:ServiceConfig
+              FirstFailureActionType="restart"
+              SecondFailureActionType="restart"
+              ThirdFailureActionType="restart"
+              RestartServiceDelayInSeconds="60"
+              ResetPeriodInDays="1" />
+          </ServiceInstall>
 
           <ServiceControl
             Id="ControlWinTimeReSyncSvc"

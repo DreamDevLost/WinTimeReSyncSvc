@@ -58,7 +58,9 @@ jobs:
 
       - name: Install WiX Toolset
         shell: pwsh
-        run: dotnet tool install --global wix --version 6.0.2
+        run: |
+          dotnet tool install --global wix --version 6.0.2
+          wix extension add -g WixToolset.Util.wixext/6.0.2
 
       - name: Build MSI installer
         shell: pwsh
@@ -66,6 +68,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path artifacts/installer | Out-Null
           wix build installer/Package.wxs `
             -arch x64 `
+            -ext WixToolset.Util.wixext/6.0.2 `
             -d "Version=$env:PACKAGE_VERSION" `
             -d "PublishDir=$pwd\artifacts\service" `
             -o "artifacts\installer\WinTimeReSyncSvc-$env:PACKAGE_VERSION-x64.msi"

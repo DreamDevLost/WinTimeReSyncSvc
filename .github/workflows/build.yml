@@ -1,0 +1,85 @@
+name: Build service and MSI
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Windows service and MSI
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Set package version
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -match '^v(?<version>\d+\.\d+\.\d+)$') {
+            $version = $Matches.version
+          } else {
+            $revision = [Math]::Min([int]$env:GITHUB_RUN_NUMBER, 65535)
+            $version = "1.0.$revision"
+          }
+
+          "PACKAGE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "Package version: $version"
+
+      - name: Build service
+        shell: pwsh
+        run: |
+          msbuild WinTimeReSyncSvc.sln `
+            /m `
+            /t:Rebuild `
+            /p:Configuration=Release `
+            /p:Platform="Any CPU" `
+            /p:RestorePackages=false
+
+          New-Item -ItemType Directory -Force -Path artifacts/service | Out-Null
+          Copy-Item WinTimeReSyncSvc/bin/Release/WinTimeReSyncSvc.exe artifacts/service/
+          Copy-Item WinTimeReSyncSvc/bin/Release/WinTimeReSyncSvc.exe.config artifacts/service/
+          if (Test-Path WinTimeReSyncSvc/bin/Release/WinTimeReSyncSvc.pdb) {
+            Copy-Item WinTimeReSyncSvc/bin/Release/WinTimeReSyncSvc.pdb artifacts/service/
+          }
+
+      - name: Install WiX Toolset
+        shell: pwsh
+        run: dotnet tool install --global wix --version 6.0.2
+
+      - name: Build MSI installer
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts/installer | Out-Null
+          wix build installer/Package.wxs `
+            -arch x64 `
+            -d "Version=$env:PACKAGE_VERSION" `
+            -d "PublishDir=$pwd\artifacts\service" `
+            -o "artifacts\installer\WinTimeReSyncSvc-$env:PACKAGE_VERSION-x64.msi"
+
+      - name: Upload service binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: WinTimeReSyncSvc-${{ env.PACKAGE_VERSION }}
+          path: artifacts/service/
+          if-no-files-found: error
+
+      - name: Upload MSI installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: WinTimeReSyncSvc-MSI-${{ env.PACKAGE_VERSION }}
+          path: artifacts/installer/*.msi
+          if-no-files-found: error

@@ -1,0 +1,46 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+    Name="WinTimeReSyncSvc"
+    Manufacturer="DreamDevLost"
+    Version="$(Version)"
+    UpgradeCode="9C1878D8-8BC7-4A7F-8E47-3F8B2653CFE0"
+    Scope="perMachine">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of WinTimeReSyncSvc is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="WinTimeReSyncSvc">
+        <Component Id="ServiceComponent" Guid="7F90A4E4-1F11-44F8-A5C8-C23FE8F355E6" Bitness="always64">
+          <File Id="ServiceExecutable"
+                Source="$(PublishDir)\WinTimeReSyncSvc.exe"
+                KeyPath="yes" />
+          <File Id="ServiceConfiguration"
+                Source="$(PublishDir)\WinTimeReSyncSvc.exe.config" />
+
+          <ServiceInstall
+            Id="InstallWinTimeReSyncSvc"
+            Name="WinTimeReSyncSvc"
+            DisplayName="WinTimeReSyncSvc"
+            Description="Re-synchronizes the Windows system time."
+            Type="ownProcess"
+            Start="auto"
+            ErrorControl="normal"
+            Account="LocalSystem" />
+
+          <ServiceControl
+            Id="ControlWinTimeReSyncSvc"
+            Name="WinTimeReSyncSvc"
+            Start="install"
+            Stop="both"
+            Remove="uninstall"
+            Wait="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <Feature Id="MainFeature" Title="WinTimeReSyncSvc" Level="1">
+      <ComponentRef Id="ServiceComponent" />
+    </Feature>
+  </Package>
+</Wix>
